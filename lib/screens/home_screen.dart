@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/news_provider.dart';
+import '../models/theme_provider.dart'; // Import theme provider
 import 'news_detail_screen.dart';
 import 'saved_news_screen.dart';
 
@@ -13,12 +14,11 @@ class _HomeScreenState extends State<HomeScreen> {
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _sortOption = 'A-Z';
-  String _selectedCategory = 'general'; 
+  String _selectedCategory = 'general';
 
   @override
   void initState() {
     super.initState();
-
     Provider.of<NewsProvider>(context, listen: false).fetchNewsByCategory(_selectedCategory);
   }
 
@@ -34,24 +34,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
+  // Select category and fetch news
   void _selectCategory(String category) {
     setState(() {
-      _selectedCategory = category;
+      _selectedCategory = category.toLowerCase(); // Lowercase for API compatibility
     });
-    Provider.of<NewsProvider>(context, listen: false).fetchNewsByCategory(category);
+    Provider.of<NewsProvider>(context, listen: false).fetchNewsByCategory(_selectedCategory);
   }
 
   @override
   Widget build(BuildContext context) {
     final newsProvider = Provider.of<NewsProvider>(context);
-
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     final filteredArticles = newsProvider.articles
         .where((article) =>
         article.title.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
-
 
     _sortArticles(filteredArticles);
 
@@ -123,6 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+            SwitchListTile(
+              title: Text('Dark Mode'),
+              value: themeProvider.isDarkMode,
+              onChanged: (value) {
+                themeProvider.toggleTheme();
+              },
+              secondary: Icon(
+                themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              ),
+            ),
           ],
         ),
       ),
@@ -142,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _categoryButton('Health'),
                   _categoryButton('Entertainment'),
                   _categoryButton('Science'),
-
                 ],
               ),
             ),
@@ -178,8 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   trailing: IconButton(
                     icon: Icon(
-                      newsProvider.bookmarkedArticles
-                          .contains(article)
+                      newsProvider.bookmarkedArticles.contains(article)
                           ? Icons.bookmark
                           : Icons.bookmark_outline,
                     ),
@@ -195,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // category buttons
+  // Category button widget
   Widget _categoryButton(String category) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -204,7 +211,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(category),
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all(
-            _selectedCategory == category ? Colors.blue : Colors.white,
+            _selectedCategory == category.toLowerCase()
+                ? Colors.blue
+                : Colors.white,
+          ),
+          foregroundColor: MaterialStateProperty.all(
+            _selectedCategory == category.toLowerCase()
+                ? Colors.white
+                : Colors.black,
           ),
         ),
       ),
